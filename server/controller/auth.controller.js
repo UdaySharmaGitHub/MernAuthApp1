@@ -58,16 +58,15 @@ export const register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dayes
     });
 
-    // // Sending Welecome Email
-    // const mailOption = {
-    //   from :process.env.SMTP_SENDER_EMAIL,
-    //   to:email,
-    //   subject: "Hello ✔ Welcome to MERN Auth APP-1", // Subject line
-    // text: "User Registration Successfully Done", // plain text body
-    // html: `Welcome ${fullName} to CodeWithUday you Successfully Register with this email: ${email} `, // html body
-    // }
-    // await transporter.sendMail(mailOption);
-    // console.log(`Email Send Successfully from ${process.env.SMTP_SENDER_EMAIL} to ${email}`)
+    // Sending Welecome Email using Nodemail and Brevo SMTP Server
+    const mailOption = {
+      from :process.env.SMTP_SENDER_EMAIL,
+      to:email,
+      subject: "Hello ✔ Welcome to MERN Auth APP-1", // Subject line
+    text: `Welcome ${fullName} to CodeWithUday you Successfully Register with this email: ${email} `, // plain text body
+    }
+    await transporter.sendMail(mailOption);
+    console.log(`Email Send Successfully from ${process.env.SMTP_SENDER_EMAIL} to ${email}`)
 
     return res.json({ success: true, message: "User Register Successfully" });
   } catch (error) {
@@ -85,7 +84,6 @@ export const login = async (req, res) => {
   if (!username || !email || !password) {
     return res.json({ success: false, message: "All field Required" });
   }
-  console.log(username,email,password)
   try {
     // check if User Exist of Not
     const existingUser =await userModel.findOne({

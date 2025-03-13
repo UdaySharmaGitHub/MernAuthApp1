@@ -1,1 +1,1 @@
-export const DB_NAME = "MernAuthApp1";
+export const DB_NAME = "mern-auth-app-1";
