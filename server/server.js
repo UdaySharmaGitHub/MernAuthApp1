@@ -3,7 +3,8 @@ import cors from 'cors'
 import 'dotenv/config'
 import cookieParser from 'cookie-parser'
 // Api Endpoints import
-import userRouter from './routes/user.route.js'
+import authRouter from './routes/user.route.js'
+import userRouter from './routes/userData.route.js'
 //  Connect DB
 import connectDB from './db/db.js'
 
@@ -34,9 +35,12 @@ app.use(cookieParser())
 app.get('/',(req,res)=>{
     res.send("API Working");
 })
-// User Routes and API
-app.use('/api/user',userRouter)
 
+// User and Auth Routes and API
+app.use('/api/auth',authRouter)
+
+// User Data routes
+app.use('/api/user',userRouter)
 
 app.listen(port,()=>{
     console.log(`Port Listing at:${port} port`)

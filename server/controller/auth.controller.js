@@ -26,7 +26,7 @@ export const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
+    // console.log(hashedPassword);
 
     const newUser = new userModel({
       username,
@@ -191,7 +191,7 @@ export const sendVerifyOtp = async(req,res)=>{
 // Now verift the Email using Previously send the OPT
 export const verfyEmail = async(req,res)=>{
   const {userId,otp} = req.body;
-  console.log(userId,otp)
+  console.log(userId,otp);
 
   if(!userId || !otp) return res.json({succes:false,message:"Missing Detail"});
   else{
@@ -227,5 +227,92 @@ export const verfyEmail = async(req,res)=>{
     } catch (error) {
       return res.json({succes:false,message:error.message})
     }
+  }
+}
+
+
+// Send Reset Password OTP
+export const sendResetOTP = async(req,res)=>{
+  const {email} = req.body;
+  // if email is not available
+  if(!email) return res.json({succes:false,message:"Email is Required"});
+
+  try {
+    // find the user
+    const user = await userModel.findOne({email});
+    // check if user not found
+    if(!user)    return res.json({succes:false,message:"User not Found"})
+
+    // Now we have to generate the otp 
+    // and send this to mail
+     // Generate Random OTP
+     const otp = String(Math.floor(100000+Math.random() *900000))
+     console.log(otp)
+     // save the opt in the database
+     user.resetOtp = otp;
+     // add Expires Reset OTP Time is 15 min Time of the OTP
+     user.resetOtpExpireAt = Date.now()+5*60*1000
+     // save the database
+     await user.save();
+ 
+     // sent the opt to the mail
+     const mailOption = {
+       from :process.env.SMTP_SENDER_EMAIL,
+       to:user.email,
+       subject: "Password Reset OTP of MERN Auth APP-1", // Subject line
+     text: `Your OTP for resetting your password is ${otp}. Use this OTP to resetting your account password `, // plain text body
+     }
+     await transporter.sendMail(mailOption);
+     console.log(`OTP Email Send Successfully from ${process.env.SMTP_SENDER_EMAIL} to ${user.email}`)
+     
+     return res.json({success:true,message:"Password Reset OTP Sent on Email"}) ;
+   
+    } catch (error) {
+    return res.json({succes:false,message:error.message})
+  }
+}
+
+// Reset User Password using the Reset OTP;
+export const resetPassword = async(req,res)=>{
+  const {email,otp,newPassword} = req.body;
+  if(!email || !otp || !newPassword) return res.json({succes:false,message:"All field is required"});
+
+  try {
+    const user = await userModel.findOne({email});
+    // check if user not found
+    if(!user)    return res.json({succes:false,message:"User not Found"})
+
+    // if doesn't match the OTP
+    if(user.resetOtp===''|| user.resetOtp !== otp){
+      return res.json({succes:false,message:"Invalid OTP"});
+    }
+    // Check if the OTP is EXpired or Not
+    if(user.resetOtpExpireAt < Date.now()){
+      return res.json({succes:false,message:"OTP Expired"})
+    }
+    // after all the authentication
+    // wehave to hashed the password
+    const hashedPassword = await bcrypt.hash(newPassword,10);
+    console.log(hashedPassword);
+    // now save the new password in the database
+    user.password = hashedPassword;
+    user.resetOtp ='';
+    user.resetOtpExpireAt = 0;
+    await user.save();
+
+    // sent message opt to the mail
+  const mailOption = {
+    from :process.env.SMTP_SENDER_EMAIL,
+    to:user.email,
+    subject: "Password Reset Successfully of MERN Auth APP-1", // Subject line
+  text: `Your Account is ${user.email} with username ${user.username}.Is Password Reset Successfully `, // plain text body
+  }
+  await transporter.sendMail(mailOption);
+  console.log(`OTP Email Send Successfully from ${process.env.SMTP_SENDER_EMAIL} to ${user.email}`)
+  
+    return res.json({succes:true,message:"Password Reset Successfully"});
+  
+  } catch (error) {
+    
   }
 }

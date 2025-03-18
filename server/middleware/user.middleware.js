@@ -5,7 +5,7 @@ export const userAuth = async(req,res,next)=>{
     try {
         // Decode the token and get the id
         const decodeToken = jwt.verify(token,process.env.TOKEN_SECRET);
-        console.log(decodeToken)
+        // console.log(decodeToken)
 
         if(decodeToken.id){
             req.body.userId = decodeToken.id;
